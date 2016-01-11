@@ -39,7 +39,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
     private $expirationDate = null;
 
     /**
-     * @type bool
+     * @type bool|Callable
      */
     private $hasValue = false;
 
@@ -51,14 +51,9 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      */
     public function __construct($key, $hasValue = false, $value = null, \DateTimeInterface $expirationDate = null)
     {
-        $this->taggedKey      = $key;
-        $this->key            = $this->getKeyFromTaggedKey($key);
-        $this->hasValue       = $hasValue;
-        $this->expirationDate = $expirationDate;
-
-        if ($hasValue === true) {
-            $this->value = $value;
-        }
+        $this->taggedKey = $key;
+        $this->key       = $this->getKeyFromTaggedKey($key);
+        $this->load($hasValue, $value, $expirationDate);
     }
 
     /**
@@ -97,6 +92,8 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      */
     public function isHit()
     {
+        $this->initialize();
+
         if (true !== $this->hasValue) {
             return false;
         }
@@ -113,6 +110,8 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      */
     public function getExpirationDate()
     {
+        $this->initialize();
+
         return $this->expirationDate;
     }
 
@@ -145,5 +144,31 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
         }
 
         return $this;
+    }
+
+    /**
+     * @param bool $hasValue
+     * @param mixed $value
+     * @param \DateTimeInterface $expirationDate
+     */
+    private function load($hasValue, $value, \DateTimeInterface $expirationDate)
+    {
+        $this->hasValue = $hasValue;
+        $this->expirationDate = $expirationDate;
+
+        if ($hasValue === true) {
+            $this->value = $value;
+        }
+    }
+
+    /**
+     * Initialize the CacheItem with actual data
+     */
+    private function initialize()
+    {
+        if (is_callable($this->hasValue)) {
+            list($hasValue, $value, $expirationDate) = $this->hasValue();
+            $this->load($hasValue, $value, $expirationDate);
+        }
     }
 }
