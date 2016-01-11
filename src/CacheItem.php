@@ -45,7 +45,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
 
     /**
      * @param string                  $key
-     * @param bool                    $hasValue
+     * @param bool|Callable           $hasValue
      * @param mixed                   $value
      * @param \DateTimeInterface|null $expirationDate
      */
@@ -56,7 +56,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
         $this->hasValue       = $hasValue;
         $this->expirationDate = $expirationDate;
 
-        if ($hasValue) {
+        if ($hasValue === true) {
             $this->value = $value;
         }
     }
@@ -97,7 +97,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      */
     public function isHit()
     {
-        if (!$this->hasValue) {
+        if (true !== $this->hasValue) {
             return false;
         }
 
