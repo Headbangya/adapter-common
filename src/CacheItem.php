@@ -39,6 +39,11 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
     private $expirationDate = null;
 
     /**
+     * @type bool
+     */
+    private $expirationHasChanged = false;
+
+    /**
      * @type bool|Callable
      */
     private $hasValue = false;
@@ -120,6 +125,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      */
     public function expiresAt($expiration)
     {
+        $this->expirationHasChanged = true;
         $this->expirationDate = $expiration;
 
         return $this;
@@ -130,6 +136,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      */
     public function expiresAfter($time)
     {
+        $this->expirationHasChanged = true;
         if ($time === null) {
             $this->expirationDate = null;
         }
@@ -151,7 +158,7 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
      * @param mixed $value
      * @param \DateTimeInterface $expirationDate
      */
-    private function load($hasValue, $value, \DateTimeInterface $expirationDate)
+    private function load($hasValue, $value, \DateTimeInterface $expirationDate = null)
     {
         $this->hasValue = $hasValue;
         $this->expirationDate = $expirationDate;
@@ -167,8 +174,17 @@ class CacheItem implements HasExpirationDateInterface, CacheItemInterface, Tagga
     private function initialize()
     {
         if (is_callable($this->hasValue)) {
-            list($hasValue, $value, $expirationDate) = $this->hasValue();
+            $func = $this->hasValue;
+            list($hasValue, $value, $expirationDate) = $func();
             $this->load($hasValue, $value, $expirationDate);
         }
+    }
+
+    /**
+     * @return bool
+     */
+    public function getExpirationHasChanged()
+    {
+        return $this->expirationHasChanged;
     }
 }
